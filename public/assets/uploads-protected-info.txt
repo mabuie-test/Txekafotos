@@ -1,0 +1,1 @@
+As imagens são armazenadas em /storage/uploads fora da raiz pública para reduzir exposição direta.
