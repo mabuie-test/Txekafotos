@@ -108,3 +108,19 @@ if (!function_exists('status_badge_class')) {
         };
     }
 }
+
+if (!function_exists('status_icon_class')) {
+    function status_icon_class(string $status): string
+    {
+        return match ($status) {
+            'pendente_pagamento', 'pending' => 'fa-regular fa-clock',
+            'pagamento_em_analise', 'processing' => 'fa-solid fa-hourglass-half',
+            'pago', 'completed', 'success' => 'fa-solid fa-circle-check',
+            'em_edicao' => 'fa-solid fa-gear',
+            'revisao' => 'fa-solid fa-rotate',
+            'concluido', 'aprovado' => 'fa-solid fa-circle-check',
+            'falhou_pagamento', 'failed', 'cancelado', 'cancelled' => 'fa-solid fa-circle-xmark',
+            default => 'fa-solid fa-circle-info',
+        };
+    }
+}

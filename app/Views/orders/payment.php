@@ -1,63 +1,58 @@
 <?php $title = 'Pagamento do pedido'; ?>
-<section class="py-5">
+<section class="section-shell">
     <div class="container">
         <div class="row justify-content-center g-4">
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-body p-4 p-lg-5">
-                        <span class="badge text-bg-warning mb-3">Pedido #<?= e((string) $order['id']) ?> · <?= e($order['tracking_code']) ?></span>
-                        <h1 class="h3">Confirmar pagamento via M-Pesa</h1>
-                        <p class="text-muted">Use o mesmo número M-Pesa informado na criação do pedido e depois sincronize o estado da cobrança.</p>
-                        <?php if (!empty($flash)): ?><div class="alert alert-success mt-3"><?= e($flash) ?></div><?php endif; ?>
-                        <?php if (!empty($error)): ?><div class="alert alert-danger mt-3"><?= e($error) ?></div><?php endif; ?>
-                        <dl class="row mt-4 mb-4">
-                            <dt class="col-sm-4">Cliente</dt><dd class="col-sm-8"><?= e($order['client_name']) ?></dd>
-                            <dt class="col-sm-4">Telefone</dt><dd class="col-sm-8"><?= e($order['client_phone']) ?></dd>
-                            <dt class="col-sm-4">Serviço</dt><dd class="col-sm-8"><?= e($order['service_type'] ?: 'Personalizado') ?></dd>
-                            <dt class="col-sm-4">Valor</dt><dd class="col-sm-8 fw-bold"><?= e(number_format((float) $order['amount'], 2)) ?> MZN</dd>
-                            <dt class="col-sm-4">Status do pedido</dt><dd class="col-sm-8"><span class="badge text-bg-secondary"><?= e($order['status']) ?></span></dd>
-                        </dl>
-                        <div class="d-flex flex-wrap gap-3">
-                            <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/iniciar-pagamento">
-                                <?= \App\Core\Csrf::field() ?>
-                                <button class="btn btn-success btn-lg">Iniciar cobrança M-Pesa</button>
-                            </form>
-                            <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/verificar-pagamento">
-                                <?= \App\Core\Csrf::field() ?>
-                                <button class="btn btn-outline-dark btn-lg">Verificar pagamento</button>
-                            </form>
-                            <a href="/pedido/<?= e((string) $order['id']) ?>/status" class="btn btn-outline-secondary btn-lg">Acompanhar pedido</a>
+                <article class="surface-card h-100">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <span class="badge-soft mb-2"><i class="fa-solid fa-receipt"></i> Pedido #<?= e((string) $order['id']) ?> · <?= e($order['tracking_code']) ?></span>
+                            <h1 class="h3 mb-2">Confirmar pagamento via M-Pesa</h1>
+                            <p class="text-muted mb-0">Use o mesmo número informado no pedido e sincronize o estado da cobrança quando confirmar no telemóvel.</p>
                         </div>
+                        <span class="status-chip <?= e(status_badge_class((string) $order['status'])) ?>"><i class="<?= e(status_icon_class((string) $order['status'])) ?>"></i><?= e($order['status']) ?></span>
                     </div>
-                </div>
+                    <div class="detail-list mb-4">
+                        <div class="detail-item"><div class="small text-muted">Cliente</div><strong><?= e($order['client_name']) ?></strong></div>
+                        <div class="detail-item"><div class="small text-muted">Telefone</div><strong><?= e($order['client_phone']) ?></strong></div>
+                        <div class="detail-item"><div class="small text-muted">Serviço</div><strong><?= e($order['service_type'] ?: 'Personalizado') ?></strong></div>
+                        <div class="detail-item"><div class="small text-muted">Valor</div><strong><?= e(number_format((float) $order['amount'], 2)) ?> MZN</strong></div>
+                    </div>
+                    <div class="action-group">
+                        <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/iniciar-pagamento">
+                            <?= \App\Core\Csrf::field() ?>
+                            <button class="btn btn-success btn-lg"><i class="fa-solid fa-credit-card me-2"></i>Iniciar cobrança M-Pesa</button>
+                        </form>
+                        <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/verificar-pagamento">
+                            <?= \App\Core\Csrf::field() ?>
+                            <button class="btn btn-outline-primary btn-lg"><i class="fa-solid fa-rotate me-2"></i>Verificar pagamento</button>
+                        </form>
+                        <a href="/pedido/<?= e((string) $order['id']) ?>/status" class="btn btn-outline-dark btn-lg"><i class="fa-solid fa-clock-rotate-left me-2"></i>Acompanhar pedido</a>
+                    </div>
+                </article>
             </div>
             <div class="col-lg-5">
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <h2 class="h5 mb-3">Estado da transação</h2>
-                        <?php if ($transaction): ?>
-                            <ul class="list-unstyled mb-0 small">
-                                <li class="mb-2"><strong>Referência Débito:</strong><br><?= e($transaction['debito_reference']) ?></li>
-                                <li class="mb-2"><strong>Status interno:</strong> <?= e($transaction['status']) ?></li>
-                                <li class="mb-2"><strong>Status gateway:</strong> <?= e($transaction['gateway_status'] ?? 'n/d') ?></li>
-                                <li class="mb-2"><strong>MSISDN:</strong> <?= e($transaction['msisdn'] ?? $order['client_phone']) ?></li>
-                                <li class="mb-0"><strong>Última verificação:</strong> <?= e($transaction['last_checked_at'] ?? 'ainda não verificado') ?></li>
-                            </ul>
-                            <?php if (!empty($transaction['failure_reason'])): ?><div class="alert alert-warning mt-3 mb-0"><?= e($transaction['failure_reason']) ?></div><?php endif; ?>
-                        <?php else: ?>
-                            <p class="text-muted mb-0">Nenhuma cobrança iniciada ainda para este pedido.</p>
-                        <?php endif; ?>
-                    </div>
+                <div class="surface-card mb-4">
+                    <h2 class="h5 mb-3"><i class="fa-solid fa-signal me-2 text-primary"></i>Estado da transação</h2>
+                    <?php if ($transaction): ?>
+                        <div class="detail-list">
+                            <div class="detail-item"><div class="small text-muted">Referência Débito</div><strong><?= e($transaction['debito_reference']) ?></strong></div>
+                            <div class="detail-item"><div class="small text-muted">Status interno</div><span class="status-chip <?= e(status_badge_class((string) $transaction['status'])) ?>"><i class="<?= e(status_icon_class((string) $transaction['status'])) ?>"></i><?= e($transaction['status']) ?></span></div>
+                            <div class="detail-item"><div class="small text-muted">Status gateway</div><strong><?= e($transaction['gateway_status'] ?? 'n/d') ?></strong></div>
+                            <div class="detail-item"><div class="small text-muted">Última verificação</div><strong><?= e($transaction['last_checked_at'] ?? 'ainda não verificado') ?></strong></div>
+                        </div>
+                        <?php if (!empty($transaction['failure_reason'])): ?><div class="alert alert-warning border-0 rounded-4 mt-3 mb-0"><i class="fa-solid fa-triangle-exclamation me-2"></i><?= e($transaction['failure_reason']) ?></div><?php endif; ?>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">Nenhuma cobrança iniciada ainda para este pedido.</p>
+                    <?php endif; ?>
                 </div>
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <h2 class="h5 mb-3">Checklist do cliente</h2>
-                        <ol class="small text-muted mb-0 ps-3">
-                            <li>Clique em <strong>Iniciar cobrança M-Pesa</strong>.</li>
-                            <li>Confirme a solicitação no telemóvel.</li>
-                            <li>Depois clique em <strong>Verificar pagamento</strong>.</li>
-                            <li>Quando o pedido ficar <strong>pago</strong>, ele entra na fila de edição.</li>
-                        </ol>
+                <div class="surface-card">
+                    <h2 class="h5 mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Checklist do cliente</h2>
+                    <div class="d-grid gap-3 text-muted">
+                        <div><strong class="d-block text-dark">1. Inicie a cobrança</strong><span class="small">Clique em “Iniciar cobrança M-Pesa”.</span></div>
+                        <div><strong class="d-block text-dark">2. Confirme no telemóvel</strong><span class="small">Aceite a solicitação de pagamento no dispositivo.</span></div>
+                        <div><strong class="d-block text-dark">3. Verifique o estado</strong><span class="small">Clique em “Verificar pagamento” para atualizar o sistema.</span></div>
+                        <div><strong class="d-block text-dark">4. Siga o progresso</strong><span class="small">Quando estiver pago, o pedido entra automaticamente na fila de edição.</span></div>
                     </div>
                 </div>
             </div>
