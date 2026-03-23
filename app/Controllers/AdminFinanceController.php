@@ -13,10 +13,10 @@ class AdminFinanceController extends Controller
     public function index(): void
     {
         $filters = [
-            'status' => (string) $this->request->input('status', ''),
-            'start_date' => (string) $this->request->input('start_date', ''),
-            'end_date' => (string) $this->request->input('end_date', ''),
-            'q' => (string) $this->request->input('q', ''),
+            'status' => $this->request->string('status'),
+            'start_date' => $this->request->string('start_date'),
+            'end_date' => $this->request->string('end_date'),
+            'q' => $this->request->string('q'),
         ];
 
         $service = new FinanceService();
@@ -37,8 +37,8 @@ class AdminFinanceController extends Controller
     public function reports(): void
     {
         $filters = [
-            'start_date' => (string) $this->request->input('start_date', ''),
-            'end_date' => (string) $this->request->input('end_date', ''),
+            'start_date' => $this->request->string('start_date'),
+            'end_date' => $this->request->string('end_date'),
         ];
 
         $reports = new ReportService();
@@ -58,7 +58,7 @@ class AdminFinanceController extends Controller
     public function export(): void
     {
         $service = new FinanceService();
-        $status = (string) $this->request->input('status', '');
+        $status = $this->request->string('status');
         $filePath = storage_path('exports/transactions-' . date('Ymd-His') . '.csv');
         $service->exportTransactionsToCsv($filePath, $status !== '' ? $status : null);
 

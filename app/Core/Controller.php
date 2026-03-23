@@ -15,8 +15,28 @@ abstract class Controller
         echo View::make($view, $data, $layout);
     }
 
-    protected function redirect(string $path): void
+    protected function redirect(string $path, int $status = 302): void
     {
-        $this->response->redirect($path);
+        $this->response->redirect($path, $status);
+    }
+
+    protected function session(): Session
+    {
+        return App::getInstance()->session();
+    }
+
+    protected function redirectWithFlash(string $path, array $flashes, int $status = 302): void
+    {
+        $this->session()->flashMany($flashes);
+        $this->redirect($path, $status);
+    }
+
+    protected function back(string $fallback = '/', array $flashes = []): void
+    {
+        if ($flashes !== []) {
+            $this->session()->flashMany($flashes);
+        }
+        $target = $_SERVER['HTTP_REFERER'] ?? $fallback;
+        $this->redirect($target);
     }
 }

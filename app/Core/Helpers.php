@@ -66,3 +66,61 @@ if (!function_exists('media_url')) {
         return '/media?path=' . rawurlencode($path);
     }
 }
+
+if (!function_exists('session_instance')) {
+    function session_instance(): ?App\Core\Session
+    {
+        return App\Core\App::getInstance()?->session();
+    }
+}
+
+if (!function_exists('old')) {
+    function old(string $key, mixed $default = ''): mixed
+    {
+        $old = session_instance()?->peekFlash('old', []);
+        return $old[$key] ?? $default;
+    }
+}
+
+if (!function_exists('flash_message')) {
+    function flash_message(string $key, mixed $default = null): mixed
+    {
+        return session_instance()?->getFlash($key, $default);
+    }
+}
+
+if (!function_exists('money')) {
+    function money(float|int|string|null $amount, string $currency = 'MZN'): string
+    {
+        return number_format((float) $amount, 2) . ' ' . $currency;
+    }
+}
+
+if (!function_exists('status_badge_class')) {
+    function status_badge_class(string $status): string
+    {
+        return match ($status) {
+            'aprovado', 'completed', 'success' => 'text-bg-success',
+            'concluido', 'pago', 'em_edicao' => 'text-bg-primary',
+            'revisao', 'pagamento_em_analise', 'processing', 'pending' => 'text-bg-warning',
+            'falhou_pagamento', 'failed', 'cancelado', 'cancelled' => 'text-bg-danger',
+            default => 'text-bg-secondary',
+        };
+    }
+}
+
+if (!function_exists('status_icon_class')) {
+    function status_icon_class(string $status): string
+    {
+        return match ($status) {
+            'pendente_pagamento', 'pending' => 'fa-regular fa-clock',
+            'pagamento_em_analise', 'processing' => 'fa-solid fa-hourglass-half',
+            'pago', 'completed', 'success' => 'fa-solid fa-circle-check',
+            'em_edicao' => 'fa-solid fa-gear',
+            'revisao' => 'fa-solid fa-rotate',
+            'concluido', 'aprovado' => 'fa-solid fa-circle-check',
+            'falhou_pagamento', 'failed', 'cancelado', 'cancelled' => 'fa-solid fa-circle-xmark',
+            default => 'fa-solid fa-circle-info',
+        };
+    }
+}

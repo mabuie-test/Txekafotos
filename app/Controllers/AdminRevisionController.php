@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Core\App;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Models\Revision;
@@ -15,8 +14,8 @@ class AdminRevisionController extends Controller
     public function index(): void
     {
         $filters = [
-            'status' => (string) $this->request->input('status', ''),
-            'q' => (string) $this->request->input('q', ''),
+            'status' => $this->request->string('status'),
+            'q' => $this->request->string('q'),
         ];
 
         $model = new Revision();
@@ -24,14 +23,12 @@ class AdminRevisionController extends Controller
             'revisions' => $model->adminList($filters),
             'summary' => $model->summary(),
             'filters' => $filters,
-            'flash' => App::getInstance()?->session()->getFlash('message'),
         ], 'layouts/admin');
     }
 
     public function respond(string $id): void
     {
-        (new RevisionService())->respond((int) $id, (string) $this->request->input('admin_response'), (int) (Auth::user()['id'] ?? 0));
-        App::getInstance()?->session()->flash('message', 'Resposta enviada e pedido devolvido para edição.');
-        $this->redirect('/admin/revisoes');
+        (new RevisionService())->respond((int) $id, $this->request->string('admin_response'), (int) (Auth::user()['id'] ?? 0));
+        $this->redirectWithFlash('/admin/revisoes', ['success' => 'Resposta enviada e pedido devolvido para edição.']);
     }
 }

@@ -19,7 +19,7 @@ class Session
         session_name($this->name);
         session_set_cookie_params([
             'httponly' => true,
-            'secure' => isset($_SERVER['HTTPS']),
+            'secure' => isset($_SERVER['HTTPS']) || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? null) === 'https'),
             'samesite' => 'Lax',
             'path' => '/',
         ]);
@@ -46,11 +46,23 @@ class Session
         $_SESSION['_flash'][$key] = $value;
     }
 
+    public function flashMany(array $items): void
+    {
+        foreach ($items as $key => $value) {
+            $this->flash((string) $key, $value);
+        }
+    }
+
     public function getFlash(string $key, mixed $default = null): mixed
     {
         $value = $_SESSION['_flash'][$key] ?? $default;
         unset($_SESSION['_flash'][$key]);
         return $value;
+    }
+
+    public function peekFlash(string $key, mixed $default = null): mixed
+    {
+        return $_SESSION['_flash'][$key] ?? $default;
     }
 
     public function regenerate(): void

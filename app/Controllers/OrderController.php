@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Core\App;
 use App\Core\Controller;
 use App\Services\OrderService;
 use App\Services\PaymentService;
@@ -15,9 +14,7 @@ class OrderController extends Controller
     {
         $this->view('orders/create', [
             'serviceTypes' => OrderService::SERVICE_TYPES,
-            'flash' => App::getInstance()?->session()->getFlash('message'),
-            'errors' => App::getInstance()?->session()->getFlash('errors', []),
-            'old' => App::getInstance()?->session()->getFlash('old', []),
+            'errors' => flash_message('errors', []),
             'maxExtraImages' => (int) config('services.upload.max_extra_images', 5),
             'maxUploadMb' => (int) config('services.upload.max_upload_mb', 5),
         ]);
@@ -26,18 +23,19 @@ class OrderController extends Controller
     public function store(): void
     {
         $data = [
-            'client_name' => (string) $this->request->input('client_name'),
-            'client_phone' => (string) $this->request->input('client_phone'),
-            'service_type' => (string) $this->request->input('service_type'),
-            'description' => (string) $this->request->input('description'),
+            'client_name' => $this->request->string('client_name'),
+            'client_phone' => $this->request->string('client_phone'),
+            'service_type' => $this->request->string('service_type'),
+            'description' => $this->request->string('description'),
             'terms' => $this->request->input('terms'),
         ];
 
-        App::getInstance()?->session()->flash('old', $data);
+        $this->session()->flash('old', $data);
 
         try {
-            $normalizedPhone = (new PaymentService())->normalizePhone($data['client_phone']);
-            if (!(new PaymentService())->validateMozambiqueMpesaNumber($normalizedPhone)) {
+            $paymentService = new PaymentService();
+            $normalizedPhone = $paymentService->normalizePhone($data['client_phone']);
+            if (!$paymentService->validateMozambiqueMpesaNumber($normalizedPhone)) {
                 throw new \RuntimeException('Use um número M-Pesa válido de Moçambique para prosseguir.');
             }
             $data['client_phone'] = $normalizedPhone;
@@ -47,11 +45,14 @@ class OrderController extends Controller
             }
 
             $orderId = (new OrderService())->createOrder($data, $this->request->files('primary_image'), $this->request->files('extra_images'));
-            App::getInstance()?->session()->flash('message', 'Pedido criado com sucesso. Continue para o pagamento M-Pesa.');
-            $this->redirect("/pedido/{$orderId}/pagamento");
+            $this->redirectWithFlash("/pedido/{$orderId}/pagamento", [
+                'success' => 'Pedido criado com sucesso. Continue para o pagamento M-Pesa.',
+            ]);
         } catch (\Throwable $exception) {
-            App::getInstance()?->session()->flash('errors', ['general' => [$exception->getMessage()]]);
-            $this->redirect('/pedido/criar');
+            $this->redirectWithFlash('/pedido/criar', [
+                'errors' => ['general' => [$exception->getMessage()]],
+                'error' => $exception->getMessage(),
+            ]);
         }
     }
 }
