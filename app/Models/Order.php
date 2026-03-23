@@ -30,9 +30,29 @@ class Order extends Model
         );
     }
 
+    public function existsByTrackingCode(string $trackingCode): bool
+    {
+        return $this->db()->fetch('SELECT id FROM orders WHERE tracking_code = :tracking_code LIMIT 1', ['tracking_code' => $trackingCode]) !== null;
+    }
+
     public function updateStatus(int $id, string $status): bool
     {
         return $this->db()->execute('UPDATE orders SET status = :status WHERE id = :id', compact('status', 'id'));
+    }
+
+    public function markPaymentUnderReview(int $id): bool
+    {
+        return $this->db()->execute("UPDATE orders SET status = 'pagamento_em_analise' WHERE id = :id", ['id' => $id]);
+    }
+
+    public function markPaymentConfirmed(int $id): bool
+    {
+        return $this->db()->execute("UPDATE orders SET status = 'pago', payment_confirmed_at = NOW() WHERE id = :id", ['id' => $id]);
+    }
+
+    public function markPaymentFailed(int $id): bool
+    {
+        return $this->db()->execute("UPDATE orders SET status = 'falhou_pagamento' WHERE id = :id", ['id' => $id]);
     }
 
     public function updateEditedImage(int $id, string $path): bool
@@ -64,6 +84,7 @@ class Order extends Model
 
         $order['images'] = $this->db()->fetchAll('SELECT * FROM order_images WHERE order_id = :id ORDER BY sort_order ASC, id ASC', ['id' => $id]);
         $order['transaction'] = $this->db()->fetch('SELECT * FROM transactions WHERE order_id = :id ORDER BY id DESC LIMIT 1', ['id' => $id]);
+        $order['transactions'] = $this->db()->fetchAll('SELECT * FROM transactions WHERE order_id = :id ORDER BY created_at DESC', ['id' => $id]);
         $order['revisions'] = $this->db()->fetchAll('SELECT * FROM revisions WHERE order_id = :id ORDER BY created_at DESC', ['id' => $id]);
         $order['feedback'] = $this->db()->fetch('SELECT * FROM feedbacks WHERE order_id = :id LIMIT 1', ['id' => $id]);
         return $order;

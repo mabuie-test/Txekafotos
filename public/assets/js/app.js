@@ -1,9 +1,17 @@
 document.querySelectorAll('.image-input').forEach((input) => {
   input.addEventListener('change', (event) => {
     const target = document.querySelector(input.dataset.previewTarget);
+    const counterTarget = input.dataset.counterTarget ? document.querySelector(input.dataset.counterTarget) : null;
+    const files = [...event.target.files];
+
+    if (counterTarget) {
+      counterTarget.textContent = String(files.length);
+    }
+
     if (!target) return;
     target.innerHTML = '';
-    [...event.target.files].forEach((file) => {
+
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const image = document.createElement('img');

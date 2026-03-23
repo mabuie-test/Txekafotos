@@ -20,6 +20,7 @@ $router->get('/pedido/criar', [OrderController::class, 'create']);
 $router->post('/pedido', [OrderController::class, 'store'], [CsrfMiddleware::class]);
 $router->get('/pedido/{id}/pagamento', [PaymentController::class, 'show']);
 $router->post('/pedido/{id}/iniciar-pagamento', [PaymentController::class, 'initiate'], [CsrfMiddleware::class]);
+$router->post('/pedido/{id}/verificar-pagamento', [PaymentController::class, 'verify'], [CsrfMiddleware::class]);
 $router->get('/acompanhar', [TrackingController::class, 'form']);
 $router->post('/acompanhar', [TrackingController::class, 'lookup'], [CsrfMiddleware::class]);
 $router->get('/pedido/{id}/status', [TrackingController::class, 'status']);

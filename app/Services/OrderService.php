@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Core\App;
 use App\Core\Database;
 use App\Models\Order;
 use App\Models\OrderImage;
@@ -16,6 +15,17 @@ class OrderService
     private readonly OrderImage $images;
     private readonly UploadService $uploadService;
     private readonly AuditService $auditService;
+
+    public const SERVICE_TYPES = [
+        'restauracao',
+        'montagem',
+        'inserir_pessoa',
+        'juntar_familiares',
+        'melhorar_qualidade',
+        'remover_fundo',
+        'colorizacao',
+        'outro',
+    ];
 
     private const STATUS_TRANSITIONS = [
         'pendente_pagamento' => ['pagamento_em_analise', 'pago', 'falhou_pagamento', 'cancelado'],
@@ -43,19 +53,24 @@ class OrderService
 
     public function createOrder(array $payload, array $primaryFile, ?array $extraFiles = null): int
     {
+        $cleanPayload = $this->validateCreatePayload($payload);
         $db = Database::instance();
+        $storedFiles = [];
+
         $db->beginTransaction();
 
         try {
             $primaryImage = $this->uploadService->storeSingle($primaryFile, 'original');
-            $trackingCode = 'TXK-' . strtoupper(bin2hex(random_bytes(4)));
+            $storedFiles[] = $primaryImage;
+
+            $trackingCode = $this->generateUniqueTrackingCode();
             $orderId = $this->orders->create([
                 'tracking_code' => $trackingCode,
-                'tracking_token' => hash('sha256', $trackingCode . '|' . microtime(true)),
-                'client_name' => trim($payload['client_name']),
-                'client_phone' => trim($payload['client_phone']),
-                'service_type' => $payload['service_type'] ?: null,
-                'description' => trim($payload['description']),
+                'tracking_token' => hash('sha256', $trackingCode . '|' . bin2hex(random_bytes(12))),
+                'client_name' => $cleanPayload['client_name'],
+                'client_phone' => $cleanPayload['client_phone'],
+                'service_type' => $cleanPayload['service_type'],
+                'description' => $cleanPayload['description'],
                 'primary_image_path' => $primaryImage['file_path'],
                 'amount' => (float) config('app.base_price', 45),
                 'status' => 'pendente_pagamento',
@@ -75,6 +90,8 @@ class OrderService
             ]);
 
             $extras = $extraFiles ? $this->uploadService->storeMultiple($extraFiles, 'extra', (int) config('services.upload.max_extra_images', 5)) : [];
+            $storedFiles = [...$storedFiles, ...$extras];
+
             foreach ($extras as $extra) {
                 $this->images->create([
                     'order_id' => $orderId,
@@ -87,11 +104,19 @@ class OrderService
                 ]);
             }
 
-            $this->auditService->log('client', null, 'order.created', 'order', $orderId, 'Novo pedido criado pelo cliente.', ['tracking_code' => $trackingCode]);
+            $this->auditService->log('client', null, 'order.created', 'order', $orderId, 'Novo pedido criado pelo cliente.', [
+                'tracking_code' => $trackingCode,
+                'extra_images_count' => count($extras),
+                'service_type' => $cleanPayload['service_type'],
+            ]);
+
             $db->commit();
             return $orderId;
         } catch (\Throwable $exception) {
-            $db->rollBack();
+            if ($db->pdo()->inTransaction()) {
+                $db->rollBack();
+            }
+            $this->uploadService->deleteStoredFiles($storedFiles);
             throw $exception;
         }
     }
@@ -104,6 +129,10 @@ class OrderService
         }
 
         $currentStatus = $order['status'];
+        if ($currentStatus === $newStatus) {
+            return true;
+        }
+
         if (!in_array($newStatus, self::STATUS_TRANSITIONS[$currentStatus] ?? [], true)) {
             throw new RuntimeException("Transição de status inválida: {$currentStatus} -> {$newStatus}");
         }
@@ -134,5 +163,66 @@ class OrderService
     {
         $this->transitionStatus($orderId, 'aprovado');
         Database::instance()->execute('UPDATE orders SET approved_at = NOW() WHERE id = :id', ['id' => $orderId]);
+    }
+
+    public function validateCreatePayload(array $payload): array
+    {
+        $name = trim((string) ($payload['client_name'] ?? ''));
+        $phone = preg_replace('/\D+/', '', (string) ($payload['client_phone'] ?? '')) ?? '';
+        $serviceType = trim((string) ($payload['service_type'] ?? ''));
+        $description = trim((string) ($payload['description'] ?? ''));
+        $termsAccepted = in_array($payload['terms'] ?? null, ['1', 1, true, 'on'], true);
+
+        $errors = [];
+        if ($name === '' || mb_strlen($name) < 3) {
+            $errors['client_name'][] = 'Informe um nome completo válido com pelo menos 3 caracteres.';
+        }
+        if (mb_strlen($name) > 150) {
+            $errors['client_name'][] = 'O nome completo é demasiado longo.';
+        }
+        if ($phone === '') {
+            $errors['client_phone'][] = 'O telefone M-Pesa é obrigatório.';
+        }
+        if ($description === '' || mb_strlen($description) < 20) {
+            $errors['description'][] = 'Descreva o pedido com pelo menos 20 caracteres.';
+        }
+        if ($serviceType !== '' && !in_array($serviceType, self::SERVICE_TYPES, true)) {
+            $errors['service_type'][] = 'Tipo de serviço inválido.';
+        }
+        if (!$termsAccepted) {
+            $errors['terms'][] = 'Você deve aceitar os termos do serviço.';
+        }
+
+        if ($errors !== []) {
+            throw new RuntimeException($this->flattenErrors($errors));
+        }
+
+        return [
+            'client_name' => $name,
+            'client_phone' => $phone,
+            'service_type' => $serviceType !== '' ? $serviceType : null,
+            'description' => $description,
+        ];
+    }
+
+    private function generateUniqueTrackingCode(): string
+    {
+        do {
+            $trackingCode = 'TXK-' . strtoupper(bin2hex(random_bytes(4)));
+        } while ($this->orders->existsByTrackingCode($trackingCode));
+
+        return $trackingCode;
+    }
+
+    private function flattenErrors(array $errors): string
+    {
+        $messages = [];
+        foreach ($errors as $fieldErrors) {
+            foreach ($fieldErrors as $message) {
+                $messages[] = $message;
+            }
+        }
+
+        return implode(' ', $messages);
     }
 }
