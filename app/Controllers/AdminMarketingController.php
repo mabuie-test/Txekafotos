@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Core\App;
 use App\Core\Auth;
 use App\Core\Controller;
 use App\Services\AuditService;
@@ -13,7 +14,9 @@ class AdminMarketingController extends Controller
 {
     public function index(): void
     {
-        $this->view('admin/marketing/index', (new HomepageService())->getHomepageData(), 'layouts/admin');
+        $this->view('admin/marketing/index', (new HomepageService())->getHomepageData() + [
+            'flash' => App::getInstance()?->session()->getFlash('message'),
+        ], 'layouts/admin');
     }
 
     public function updateHomepage(): void
@@ -37,6 +40,7 @@ class AdminMarketingController extends Controller
             ],
         ]);
         (new AuditService())->log('admin', (int) (Auth::user()['id'] ?? 0), 'marketing.homepage_updated', 'homepage_content', 1, 'Conteúdo da homepage atualizado.');
+        App::getInstance()?->session()->flash('message', 'Conteúdo da homepage atualizado com sucesso.');
         $this->redirect('/admin/marketing');
     }
 }

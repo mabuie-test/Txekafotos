@@ -30,6 +30,7 @@ $router->group(['prefix' => '/admin', 'middleware' => [AdminMiddleware::class]],
     $router->get('/revisoes', [AdminRevisionController::class, 'index']);
     $router->post('/revisoes/{id}/responder', [AdminRevisionController::class, 'respond'], [CsrfMiddleware::class]);
     $router->get('/financeiro', [AdminFinanceController::class, 'index']);
+    $router->get('/financeiro/exportar', [AdminFinanceController::class, 'export']);
     $router->get('/relatorios', [AdminFinanceController::class, 'reports']);
     $router->get('/showcases', [AdminShowcaseController::class, 'index']);
     $router->post('/showcases', [AdminShowcaseController::class, 'store'], [CsrfMiddleware::class]);
