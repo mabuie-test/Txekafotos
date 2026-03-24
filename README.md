@@ -68,6 +68,63 @@ mysql -u root -p < database/seed.sql
 php -S localhost:8000 -t public
 ```
 
+## Instalação rápida com Composer
+
+O projecto **já tem `composer.json`** e usa Composer para carregar o autoload PSR-4 e a dependência `vlucas/phpdotenv`.
+
+### Comandos principais
+
+```bash
+composer install
+composer setup
+composer serve
+```
+
+### O que cada comando faz
+
+- `composer install`: instala as dependências do projecto.
+- `composer setup`: cria as pastas `storage/`, `storage/logs/`, `storage/temp/`, `storage/uploads/` e `storage/exports/`, além de copiar `.env.example` para `.env` caso o `.env` ainda não exista.
+- `composer serve`: sobe o servidor local em `http://localhost:8000`.
+
+## Como rodar no Windows
+
+Se estiver a usar Windows, consulte também o ficheiro **`como-rodar-windows.txt`** na raiz do projecto.
+
+### Resumo rápido para Windows
+
+1. Instale:
+   - PHP 8.1 ou superior
+   - Composer
+   - MySQL 8+ ou MariaDB
+2. Abra **PowerShell** ou **CMD** dentro da pasta do projecto.
+3. Execute:
+
+```powershell
+composer install
+composer setup
+```
+
+4. Crie a base de dados `txekafotos`.
+5. Importe:
+
+```powershell
+mysql -u root -p txekafotos < database/schema.sql
+mysql -u root -p txekafotos < database/seed.sql
+```
+
+6. Edite o ficheiro `.env` com as credenciais do MySQL e da API Débito.
+7. Inicie:
+
+```powershell
+composer serve
+```
+
+8. Abra no navegador:
+
+```text
+http://localhost:8000
+```
+
 ## Variáveis de ambiente
 
 ```env

@@ -18,7 +18,17 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "@php -r \"if (!is_dir('storage/logs')) mkdir('storage/logs', 0775, true);\""
+      "@php -r \"foreach (['storage', 'storage/logs', 'storage/temp', 'storage/uploads', 'storage/exports'] as $dir) { if (!is_dir($dir)) mkdir($dir, 0775, true); }\""
+    ],
+    "post-update-cmd": [
+      "@composer post-install-cmd"
+    ],
+    "setup": [
+      "@composer post-install-cmd",
+      "@php -r \"if (!file_exists('.env') && file_exists('.env.example')) copy('.env.example', '.env');\""
+    ],
+    "setup-windows": [
+      "@composer setup"
     ],
     "serve": "php -S localhost:8000 -t public"
   },
