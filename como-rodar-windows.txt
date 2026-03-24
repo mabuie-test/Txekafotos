@@ -1,13 +1,6 @@
 COMO RODAR A PLATAFORMA TXEKAFOTOS NO WINDOWS (DO ZERO)
 =======================================================
 
-Observação importante
----------------------
-Você pediu um arquivo chamado "como rodar?.txt", mas o caractere "?" não é permitido em nomes de arquivos no Windows.
-Por isso, o nome compatível e seguro foi criado como:
-
-    como-rodar-windows.txt
-
 
 1. O QUE VOCÊ PRECISA INSTALAR
 ------------------------------
