@@ -1,0 +1,220 @@
+COMO RODAR A PLATAFORMA TXEKAFOTOS NO WINDOWS (DO ZERO)
+=======================================================
+
+Observação importante
+---------------------
+Você pediu um arquivo chamado "como rodar?.txt", mas o caractere "?" não é permitido em nomes de arquivos no Windows.
+Por isso, o nome compatível e seguro foi criado como:
+
+    como-rodar-windows.txt
+
+
+1. O QUE VOCÊ PRECISA INSTALAR
+------------------------------
+Antes de rodar o projeto, instale estes programas no Windows:
+
+1. PHP 8.1 ou superior
+2. Composer
+3. MySQL 8+ ou MariaDB
+4. Git (opcional, mas recomendado)
+
+Se preferir um ambiente pronto, também pode usar:
+- XAMPP
+- Laragon
+- WampServer
+
+Mas este projeto também roda com PHP + Composer + MySQL instalados separadamente.
+
+
+2. ABRIR O PROJETO
+------------------
+Abra o PowerShell ou o Prompt de Comando dentro da pasta do projeto.
+
+Exemplo:
+
+    cd C:\caminho\para\Txekafotos
+
+
+3. INSTALAR AS DEPENDÊNCIAS
+---------------------------
+Este projeto já possui um arquivo composer.json.
+
+Para instalar as dependências, execute:
+
+    composer install
+
+
+4. PREPARAR A ESTRUTURA LOCAL
+-----------------------------
+Depois disso, execute:
+
+    composer setup
+
+Esse comando faz automaticamente:
+- cria a pasta storage/
+- cria storage/logs/
+- cria storage/temp/
+- cria storage/uploads/
+- cria storage/exports/
+- copia .env.example para .env, caso o .env ainda não exista
+
+
+5. CONFIGURAR O ARQUIVO .ENV
+----------------------------
+Abra o arquivo .env em um editor como VS Code ou Notepad++.
+
+Exemplo de configuração:
+
+    APP_NAME=Txekafotos
+    APP_ENV=local
+    APP_DEBUG=true
+    APP_URL=http://localhost:8000
+    APP_TIMEZONE=Africa/Maputo
+    APP_CURRENCY=MZN
+    APP_BASE_PRICE=45
+
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_NAME=txekafotos
+    DB_USER=root
+    DB_PASS=
+
+    DEBITO_BASE_URL=https://my.debito.co.mz/api/v1
+    DEBITO_TOKEN=
+    DEBITO_WALLET_ID=
+    DEBITO_TIMEOUT=30
+
+    MAX_UPLOAD_MB=5
+    MAX_EXTRA_IMAGES=5
+    MAX_REVISIONS=2
+    SESSION_NAME=txekafotos_session
+
+Ajuste principalmente:
+- DB_HOST
+- DB_PORT
+- DB_NAME
+- DB_USER
+- DB_PASS
+- DEBITO_TOKEN
+- DEBITO_WALLET_ID
+
+
+6. CRIAR A BASE DE DADOS
+------------------------
+Entre no MySQL e crie a base:
+
+    CREATE DATABASE txekafotos CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+Você pode fazer isso via:
+- MySQL Workbench
+- phpMyAdmin
+- linha de comando
+
+
+7. IMPORTAR O BANCO
+-------------------
+No terminal, rode:
+
+    mysql -u root -p txekafotos < database\schema.sql
+    mysql -u root -p txekafotos < database\seed.sql
+
+Se o comando mysql não for reconhecido, use o caminho completo do executável.
+Exemplo:
+
+    "C:\Program Files\MySQL\MySQL Server 8.0\bin\mysql.exe" -u root -p txekafotos < database\schema.sql
+
+
+8. INICIAR A PLATAFORMA
+-----------------------
+Para iniciar o servidor local, rode:
+
+    composer serve
+
+Ou diretamente:
+
+    php -S localhost:8000 -t public
+
+Depois abra no navegador:
+
+    http://localhost:8000
+
+
+9. LOGIN ADMIN PADRÃO
+---------------------
+Credenciais seed do painel administrativo:
+
+    Email: admin@txekafotos.com
+    Senha: Admin@123
+
+Importante:
+Troque essa senha assim que for usar o sistema em ambiente real.
+
+
+10. SCRIPTS ÚTEIS
+-----------------
+O projeto inclui scripts PHP auxiliares na pasta scripts/:
+
+- scripts/check_payments.php
+- scripts/daily_metrics.php
+- scripts/cleanup_temp.php
+
+Para rodar manualmente no Windows:
+
+    php scripts\check_payments.php
+    php scripts\daily_metrics.php
+    php scripts\cleanup_temp.php
+
+
+11. PROBLEMAS COMUNS
+--------------------
+A) "composer" não é reconhecido
+- O Composer não está instalado ou não está no PATH do Windows.
+
+B) "php" não é reconhecido
+- O PHP não está instalado ou o caminho do php.exe não foi adicionado ao PATH.
+
+C) Erro de conexão com base de dados
+- Confira DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASS no .env.
+
+D) Erro ao subir uploads ou logs
+- Rode novamente:
+
+    composer setup
+
+E) Página em branco ou erro 500
+- Confirme que APP_DEBUG=true no ambiente local.
+- Verifique se o PHP é 8.1+.
+- Confira se o banco foi importado corretamente.
+
+
+12. ORDEM RECOMENDADA DO ZERO
+-----------------------------
+Se quiser seguir exatamente a sequência correta, use esta ordem:
+
+1. Instalar PHP
+2. Instalar Composer
+3. Instalar MySQL
+4. Abrir a pasta do projeto no terminal
+5. Rodar composer install
+6. Rodar composer setup
+7. Criar o banco txekafotos
+8. Importar schema.sql
+9. Importar seed.sql
+10. Configurar o .env
+11. Rodar composer serve
+12. Abrir http://localhost:8000
+
+
+13. COMANDOS FINAIS RESUMIDOS
+-----------------------------
+Dentro da pasta do projeto:
+
+    composer install
+    composer setup
+    mysql -u root -p txekafotos < database\schema.sql
+    mysql -u root -p txekafotos < database\seed.sql
+    composer serve
+
+Pronto. A plataforma deve ficar acessível em:
+
+    http://localhost:8000
