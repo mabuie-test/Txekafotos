@@ -65,6 +65,11 @@ class Order extends Model
         return $this->db()->fetch('SELECT * FROM orders WHERE id = :id AND client_phone = :phone LIMIT 1', ['id' => $id, 'phone' => $phone]);
     }
 
+    public function findAllByPhone(string $phone): array
+    {
+        return $this->db()->fetchAll('SELECT * FROM orders WHERE client_phone = :phone ORDER BY created_at DESC', ['phone' => $phone]);
+    }
+
     public function getDashboardStats(): array
     {
         return $this->db()->fetchAll('SELECT status, COUNT(*) as total FROM orders GROUP BY status');

@@ -11,4 +11,6 @@ return [
     'currency' => env('APP_CURRENCY', 'MZN'),
     'base_price' => (float) env('APP_BASE_PRICE', 45),
     'session_name' => env('SESSION_NAME', 'txekafotos_session'),
+    'contact_phone' => env('APP_CONTACT_PHONE', ''),
+    'contact_email' => env('APP_CONTACT_EMAIL', ''),
 ];

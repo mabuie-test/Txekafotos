@@ -21,7 +21,12 @@ class FeedbackController extends Controller
             ]);
             $this->redirect('/pedido/' . $id . '/status');
         } catch (\Throwable $exception) {
-            $this->view('tracking/status', ['order' => (new \App\Models\Order())->withRelations((int) $id), 'error' => $exception->getMessage()]);
+            $this->view('tracking/status', [
+                'order' => (new \App\Models\Order())->withRelations((int) $id),
+                'error' => $exception->getMessage(),
+                'contactPhone' => (string) config('app.contact_phone', ''),
+                'contactEmail' => (string) config('app.contact_email', ''),
+            ]);
         }
     }
 }

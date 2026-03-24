@@ -1,9 +1,10 @@
 <?php $title = 'Pagamento do pedido'; ?>
+<?php $canPay = in_array((string) $order['status'], ['pendente_pagamento', 'pagamento_em_analise', 'falhou_pagamento'], true); ?>
 <section class="section-shell">
     <div class="container">
         <div class="row justify-content-center g-4">
             <div class="col-lg-7">
-                <article class="surface-card h-100">
+                <article class="surface-card h-100" id="orderSummaryCard">
                     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                         <div>
                             <span class="badge-soft mb-2"><i class="fa-solid fa-receipt"></i> Pedido #<?= e((string) $order['id']) ?> · <?= e($order['tracking_code']) ?></span>
@@ -17,17 +18,21 @@
                         <div class="detail-item"><div class="small text-muted">Telefone</div><strong><?= e($order['client_phone']) ?></strong></div>
                         <div class="detail-item"><div class="small text-muted">Serviço</div><strong><?= e($order['service_type'] ?: 'Personalizado') ?></strong></div>
                         <div class="detail-item"><div class="small text-muted">Valor</div><strong><?= e(number_format((float) $order['amount'], 2)) ?> MZN</strong></div>
+                        <div class="detail-item"><div class="small text-muted">Tracking</div><strong><?= e($order['tracking_code']) ?></strong></div>
                     </div>
                     <div class="action-group">
-                        <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/iniciar-pagamento">
-                            <?= \App\Core\Csrf::field() ?>
-                            <button class="btn btn-success btn-lg"><i class="fa-solid fa-credit-card me-2"></i>Iniciar cobrança M-Pesa</button>
-                        </form>
-                        <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/verificar-pagamento">
-                            <?= \App\Core\Csrf::field() ?>
-                            <button class="btn btn-outline-primary btn-lg"><i class="fa-solid fa-rotate me-2"></i>Verificar pagamento</button>
-                        </form>
+                        <?php if ($canPay): ?>
+                            <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/iniciar-pagamento">
+                                <?= \App\Core\Csrf::field() ?>
+                                <button class="btn btn-success btn-lg"><i class="fa-solid fa-credit-card me-2"></i>Iniciar cobrança M-Pesa</button>
+                            </form>
+                            <form method="post" action="/pedido/<?= e((string) $order['id']) ?>/verificar-pagamento">
+                                <?= \App\Core\Csrf::field() ?>
+                                <button class="btn btn-outline-primary btn-lg"><i class="fa-solid fa-rotate me-2"></i>Verificar pagamento</button>
+                            </form>
+                        <?php endif; ?>
                         <a href="/pedido/<?= e((string) $order['id']) ?>/status" class="btn btn-outline-dark btn-lg"><i class="fa-solid fa-clock-rotate-left me-2"></i>Acompanhar pedido</a>
+                        <button type="button" class="btn btn-outline-secondary btn-lg" data-download-card="#orderSummaryCard" data-download-name="pedido-<?= e((string) $order['id']) ?>-detalhes.png"><i class="fa-solid fa-download me-2"></i>Baixar detalhes em PNG</button>
                     </div>
                 </article>
             </div>
@@ -49,10 +54,10 @@
                 <div class="surface-card">
                     <h2 class="h5 mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Checklist do cliente</h2>
                     <div class="d-grid gap-3 text-muted">
-                        <div><strong class="d-block text-dark">1. Inicie a cobrança</strong><span class="small">Clique em “Iniciar cobrança M-Pesa”.</span></div>
-                        <div><strong class="d-block text-dark">2. Confirme no telemóvel</strong><span class="small">Aceite a solicitação de pagamento no dispositivo.</span></div>
-                        <div><strong class="d-block text-dark">3. Verifique o estado</strong><span class="small">Clique em “Verificar pagamento” para atualizar o sistema.</span></div>
-                        <div><strong class="d-block text-dark">4. Siga o progresso</strong><span class="small">Quando estiver pago, o pedido entra automaticamente na fila de edição.</span></div>
+                        <div><strong class="d-block text-dark">1. Guarde o comprovativo visual</strong><span class="small">Use o botão “Baixar detalhes em PNG” para manter o tracking do pedido.</span></div>
+                        <div><strong class="d-block text-dark">2. Inicie a cobrança</strong><span class="small">Clique em “Iniciar cobrança M-Pesa”.</span></div>
+                        <div><strong class="d-block text-dark">3. Confirme no telemóvel</strong><span class="small">Aceite a solicitação de pagamento no dispositivo.</span></div>
+                        <div><strong class="d-block text-dark">4. Verifique o estado</strong><span class="small">Clique em “Verificar pagamento” para atualizar o sistema.</span></div>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@
 <?php $steps = ['pendente_pagamento','pagamento_em_analise','pago','em_edicao','revisao','concluido','aprovado']; ?>
 <?php $currentStepIndex = array_search((string) $order['status'], $steps, true); ?>
 <?php $currentStepIndex = $currentStepIndex === false ? 0 : $currentStepIndex; ?>
+<?php $canPay = in_array((string) $order['status'], ['pendente_pagamento', 'pagamento_em_analise', 'falhou_pagamento'], true); ?>
 <section class="section-shell">
     <div class="container">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -10,7 +11,12 @@
                 <h1 class="h2 mb-1">Acompanhamento do pedido</h1>
                 <p class="text-muted mb-0">Tracking <?= e($order['tracking_code']) ?> · Veja o estado atual, o histórico e as próximas ações.</p>
             </div>
-            <a href="/acompanhar" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left me-2"></i>Nova consulta</a>
+            <div class="action-group">
+                <?php if ($canPay): ?>
+                    <a href="/pedido/<?= e((string) $order['id']) ?>/pagamento" class="btn btn-success"><i class="fa-solid fa-credit-card me-2"></i>Pagar agora</a>
+                <?php endif; ?>
+                <a href="/acompanhar" class="btn btn-outline-primary"><i class="fa-solid fa-arrow-left me-2"></i>Nova consulta</a>
+            </div>
         </div>
         <?php if (!empty($error)): ?><div class="alert alert-danger border-0 rounded-4"><i class="fa-solid fa-triangle-exclamation me-2"></i><?= e($error) ?></div><?php endif; ?>
         <div class="row g-4">
@@ -24,6 +30,9 @@
                         </div>
                         <span class="status-chip <?= e(status_badge_class((string) $order['status'])) ?>"><i class="<?= e(status_icon_class((string) $order['status'])) ?>"></i><?= e($order['status']) ?></span>
                     </div>
+                    <?php if ($canPay): ?>
+                        <div class="alert alert-warning border-0 rounded-4 mb-4"><i class="fa-solid fa-credit-card me-2"></i>Este pedido ainda não foi finalizado no pagamento. Use o botão <strong>Pagar agora</strong> para continuar.</div>
+                    <?php endif; ?>
                     <div class="timeline">
                         <?php foreach ($steps as $step): ?>
                             <?php $stepIndex = array_search($step, $steps, true); ?>
@@ -132,6 +141,23 @@
                         <div class="detail-item"><div class="small text-muted">Telefone</div><strong><?= e($order['client_phone']) ?></strong></div>
                         <div class="detail-item"><div class="small text-muted">Serviço</div><strong><?= e($order['service_type'] ?: 'Personalizado') ?></strong></div>
                         <div class="detail-item"><div class="small text-muted">Revisões usadas</div><strong><?= e((string) $order['revisions_used']) ?>/<?= e((string) config('services.orders.max_revisions', 2)) ?></strong></div>
+                    </div>
+                </aside>
+                <aside class="surface-card mb-4">
+                    <span class="eyebrow text-primary">Contacte-nos</span>
+                    <div class="d-grid gap-3 mt-3">
+                        <?php if (!empty($contactPhone)): ?>
+                            <a class="detail-item d-flex justify-content-between align-items-center text-dark" href="tel:<?= e(preg_replace('/\s+/', '', (string) $contactPhone) ?? '') ?>">
+                                <span><i class="fa-solid fa-phone me-2 text-primary"></i>Telefone</span>
+                                <strong><?= e($contactPhone) ?></strong>
+                            </a>
+                        <?php endif; ?>
+                        <?php if (!empty($contactEmail)): ?>
+                            <a class="detail-item d-flex justify-content-between align-items-center text-dark" href="mailto:<?= e($contactEmail) ?>">
+                                <span><i class="fa-solid fa-envelope me-2 text-primary"></i>Email</span>
+                                <strong><?= e($contactEmail) ?></strong>
+                            </a>
+                        <?php endif; ?>
                     </div>
                 </aside>
                 <aside class="surface-card">
