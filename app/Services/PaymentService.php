@@ -36,6 +36,7 @@ class PaymentService
         if (!$this->validateMozambiqueMpesaNumber($normalizedPhone)) {
             throw new RuntimeException('Número M-Pesa inválido. Use um contacto Vodacom Moçambique válido.');
         }
+        $gatewayMsisdn = $this->toGatewayMsisdn($normalizedPhone);
 
         $existingPending = $this->transactions->activeByOrder($orderId);
         if ($existingPending) {
@@ -53,7 +54,7 @@ class PaymentService
 
         $referenceDescription = sprintf('Pedido Foto #%d', $orderId);
         $payload = [
-            'msisdn' => $normalizedPhone,
+            'msisdn' => $gatewayMsisdn,
             'amount' => round($amount, 2),
             'reference_description' => $referenceDescription,
         ];
@@ -80,7 +81,7 @@ class PaymentService
             $this->auditService->log('system', null, 'payment.initiated', 'transaction', $transactionId, 'Pagamento M-Pesa iniciado.', [
                 'order_id' => $orderId,
                 'debito_reference' => $reference,
-                'msisdn' => $normalizedPhone,
+                'msisdn' => $gatewayMsisdn,
             ]);
             $db->commit();
         } catch (\Throwable $exception) {
@@ -133,7 +134,16 @@ class PaymentService
 
     public function validateMozambiqueMpesaNumber(string $phone): bool
     {
-        return (bool) preg_match('/^2588[4-7][0-9]{7}$/', $phone);
+        return (bool) preg_match('/^(258)?8[4-7][0-9]{7}$/', $phone);
+    }
+
+    public function toGatewayMsisdn(string $phone): string
+    {
+        $normalized = $this->normalizePhone($phone);
+        if (str_starts_with($normalized, '258')) {
+            return substr($normalized, 3);
+        }
+        return $normalized;
     }
 
     public function createPendingTransaction(int $orderId, string $reference, float $amount, string $msisdn, string $referenceDescription, array $response): int
